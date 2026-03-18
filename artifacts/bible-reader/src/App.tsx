@@ -348,39 +348,15 @@ export default function App() {
           transition:"all 0.2s",
         }}>Read ›</button>
 
-        <Div/>
-
-        {/* Translation pills */}
-        {leftLabel && (
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <Pill T={T} color={T.gold}>{leftLabel}</Pill>
-            {parallel && rightLabel && <>
-              <span style={{color:T.muted,fontSize:11}}>⟷</span>
-              <Pill T={T} color={darkMode?"#8ab4c9":"#4a7a99"}>{rightLabel}</Pill>
-            </>}
-            {!parallel && rightLabel && activeSide==="right" && (
-              <Pill T={T} color={darkMode?"#8ab4c9":"#4a7a99"}>{rightLabel}</Pill>
-            )}
-          </div>
-        )}
-
-        <Div/>
-
-        {/* Parallel / Single */}
-        <div style={{display:"flex",gap:3}}>
-          <ToggleBtn active={parallel} onClick={()=>setParallel(true)}>⊞ Parallel</ToggleBtn>
-          <ToggleBtn active={!parallel} onClick={()=>setParallel(false)}>▭ Single</ToggleBtn>
-        </div>
-
         {/* Status */}
         <div style={{marginLeft:"auto",fontSize:11,color:T.muted,fontStyle:"italic"}}>
           {loading ? "Loading…"
             : loadError ? <span style={{color:"#e07060"}}>⚠ {loadError}</span>
-            : leftData ? (verses ? `${book} · Ch.${chap} · ${verses.nums.length} v` : `${books.length} books`) : ""}
+            : leftData ? (verses ? `${verses.nums.length} verses` : `${books.length} books`) : ""}
         </div>
 
         {/* Ribbon toggle */}
-        <button onClick={()=>setRibbon(p=>!p)} title="More options" style={{
+        <button onClick={()=>setRibbon(p=>!p)} title="Settings" style={{
           border:`1px solid ${T.goldBorder}`, background: ribbon ? T.goldFaint : "transparent",
           color:T.gold, borderRadius:4, padding:"5px 10px", cursor:"pointer",
           fontSize:13, fontFamily:"Georgia,serif", transition:"all 0.2s",
@@ -394,6 +370,17 @@ export default function App() {
           padding:"10px 16px", background:T.ribbon,
           borderBottom:`1px solid ${T.barBorder}`, flexShrink:0,
         }}>
+
+          {/* View mode */}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <RibbonLabel T={T}>View</RibbonLabel>
+            <div style={{display:"flex",gap:3}}>
+              <ToggleBtn active={parallel} onClick={()=>setParallel(true)}>⊞ Parallel</ToggleBtn>
+              <ToggleBtn active={!parallel} onClick={()=>setParallel(false)}>▭ Single</ToggleBtn>
+            </div>
+          </div>
+
+          <div style={{width:1,alignSelf:"stretch",background:T.divider}}/>
 
           {/* Auto-scroll */}
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -483,6 +470,73 @@ export default function App() {
           }}>↺ Reset</button>
         </div>
       )}
+
+      {/* ── Info bar (always visible) ── */}
+      <div style={{
+        display:"flex", alignItems:"center", gap:0,
+        padding:"0", background:T.panelHead,
+        borderBottom:`1px solid ${T.barBorder}`, flexShrink:0, minHeight:34,
+      }}>
+        {/* Play/Pause quick button */}
+        <button onClick={()=>verses && setAutoOn(p=>!p)} title={autoOn?"Pause auto-scroll":"Play auto-scroll"} style={{
+          width:34, height:34, flexShrink:0, border:"none",
+          borderRight:`1px solid ${T.barBorder}`,
+          background: autoOn ? T.goldFaint : "transparent",
+          color: verses ? T.gold : T.muted,
+          cursor: verses ? "pointer" : "not-allowed",
+          fontSize:12, transition:"all 0.2s",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          boxShadow: autoOn ? `inset 0 0 8px ${T.goldFaint}` : "none",
+        }}>{autoOn ? "⏸" : "▶"}</button>
+
+        {/* Left label */}
+        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center",
+          gap:6, padding:"0 12px", overflow:"hidden"}}>
+          <span style={{color:T.gold, fontSize:12, fontStyle:"italic", fontWeight:"bold",
+            whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+            {book || "—"}
+          </span>
+          {leftLabel && (
+            <span style={{color:T.muted, fontSize:10, fontStyle:"italic",
+              whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+              ({leftLabel})
+            </span>
+          )}
+        </div>
+
+        {/* Chapter middle */}
+        <div style={{
+          flexShrink:0, padding:"0 16px", borderLeft:`1px solid ${T.barBorder}`,
+          borderRight:`1px solid ${T.barBorder}`, height:"100%",
+          display:"flex", alignItems:"center",
+        }}>
+          <span style={{fontSize:11, color:T.muted, letterSpacing:1, textTransform:"uppercase"}}>
+            {chap ? `Ch. ${chap}` : "Ch. —"}
+          </span>
+        </div>
+
+        {/* Right label */}
+        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center",
+          gap:6, padding:"0 12px", overflow:"hidden"}}>
+          <span style={{color: darkMode?"#8ab4c9":"#4a7a99", fontSize:12, fontStyle:"italic",
+            fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+            {book || "—"}
+          </span>
+          {rightLabel && (
+            <span style={{color:T.muted, fontSize:10, fontStyle:"italic",
+              whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+              ({rightLabel})
+            </span>
+          )}
+        </div>
+
+        {/* Scrolling indicator */}
+        {autoOn && (
+          <div style={{flexShrink:0, paddingRight:10}}>
+            <Blink T={T}/>
+          </div>
+        )}
+      </div>
 
       {/* ── Single-view side switcher ── */}
       {!parallel && verses && (

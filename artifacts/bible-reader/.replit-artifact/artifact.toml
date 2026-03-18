@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Dual-Panel Bible Reader"
+version = "1.0.0"
+id = "artifacts/bible-reader"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 24196
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/bible-reader run dev"
+
+[services.env]
+PORT = "24196"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/bible-reader", "run", "build"]
+publicDir = "artifacts/bible-reader/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

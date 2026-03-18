@@ -214,13 +214,17 @@ export default function App() {
     let last: number|null = null;
     const loop = (ts: number) => {
       rafRef.current = requestAnimationFrame(loop);
-      if (!autoRef.current || !leftRef.current) { last=null; return; }
+      const primary = leftRef.current ?? rightRef.current;
+      if (!autoRef.current || !primary) { last=null; return; }
       if (last !== null) {
         const px = (ts-last)*speedRef.current*0.03;
-        leftRef.current.scrollTop += px;
-        if (rightRef.current) rightRef.current.scrollTop = leftRef.current.scrollTop;
-        const el = leftRef.current;
-        if (el.scrollTop >= el.scrollHeight - el.clientHeight - 1) { setAutoOn(false); last=null; return; }
+        primary.scrollTop += px;
+        // mirror to the other panel when both are visible (parallel mode)
+        if (leftRef.current && rightRef.current) {
+          const other = primary === leftRef.current ? rightRef.current : leftRef.current;
+          other.scrollTop = primary.scrollTop;
+        }
+        if (primary.scrollTop >= primary.scrollHeight - primary.clientHeight - 1) { setAutoOn(false); last=null; return; }
       }
       last = ts;
     };

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 const DEFAULT_LEFT  = "https://raw.githubusercontent.com/sajeevavahini/bibles/main/Telugu%20Bible%20(BSI).xml";
 const DEFAULT_RIGHT = "https://raw.githubusercontent.com/sajeevavahini/bibles/main/New%20International%20Version%20(UK).xml";
-const PROXY = "https://corsproxy.io/?url=";
+const PROXY = "/api/proxy?url=";
 
 type Books = Record<string, Record<string, Record<string, string>>>;
 

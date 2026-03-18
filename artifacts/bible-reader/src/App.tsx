@@ -285,7 +285,9 @@ export default function App() {
           display:"flex", alignItems:"center", gap:8,
         }}>
           <div style={{width:3,height:14,background:color,borderRadius:2,flexShrink:0,opacity:0.8}}/>
-          {label}
+          {book && <span style={{fontWeight:"bold",letterSpacing:0.3}}>{book}</span>}
+          {book && <span style={{opacity:0.35,fontSize:10}}>·</span>}
+          <span style={{opacity:0.75}}>{label}</span>
         </div>
         <div ref={ref} onScroll={onScr} style={{padding:"16px 20px",overflowY:"auto",flex:1,background:T.bg}}>
           {loading ? <Loading T={T}/> : !verses
@@ -492,16 +494,10 @@ export default function App() {
         {/* Left label */}
         <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center",
           gap:6, padding:"0 12px", overflow:"hidden"}}>
-          <span style={{color:T.gold, fontSize:12, fontStyle:"italic", fontWeight:"bold",
+          <span style={{color:T.gold, fontSize:11, fontStyle:"italic",
             whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
-            {book || "—"}
+            {leftLabel || "—"}
           </span>
-          {leftLabel && (
-            <span style={{color:T.muted, fontSize:10, fontStyle:"italic",
-              whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
-              ({leftLabel})
-            </span>
-          )}
         </div>
 
         {/* Chapter middle */}
@@ -518,16 +514,10 @@ export default function App() {
         {/* Right label */}
         <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center",
           gap:6, padding:"0 12px", overflow:"hidden"}}>
-          <span style={{color: darkMode?"#8ab4c9":"#4a7a99", fontSize:12, fontStyle:"italic",
-            fontWeight:"bold", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
-            {book || "—"}
+          <span style={{color: darkMode?"#8ab4c9":"#4a7a99", fontSize:11, fontStyle:"italic",
+            whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+            {rightLabel || "—"}
           </span>
-          {rightLabel && (
-            <span style={{color:T.muted, fontSize:10, fontStyle:"italic",
-              whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
-              ({rightLabel})
-            </span>
-          )}
         </div>
 
         {/* Scrolling indicator */}

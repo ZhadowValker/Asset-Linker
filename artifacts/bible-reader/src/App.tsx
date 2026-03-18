@@ -310,55 +310,21 @@ export default function App() {
 
       {/* ── Main toolbar ── */}
       <div style={{
-        display:"flex", alignItems:"center", gap:8, flexWrap:"wrap",
-        padding:"8px 14px", background:T.bar,
+        display:"flex", alignItems:"center", gap:8,
+        padding:"7px 14px", background:T.bar,
         borderBottom:`1px solid ${T.barBorder}`, flexShrink:0,
       }}>
+        <span style={{fontSize:13,letterSpacing:1,color:T.gold,fontStyle:"italic",fontWeight:"bold"}}>✝ Bible Reader</span>
 
-        {/* Book */}
-        <Label T={T}>Book</Label>
-        <select value={book} onChange={e=>{setBook(e.target.value);setChap("");setVerse("");setVerses(null);setAutoOn(false);}}
-          disabled={!leftData} style={{...sel,minWidth:140}}>
-          <option value="">— Book —</option>
-          {books.map(b=><option key={b} value={b}>{b}</option>)}
-        </select>
-
-        {/* Chapter */}
-        <Label T={T}>Ch</Label>
-        <select value={chap} onChange={e=>{setChap(e.target.value);setVerse("");setVerses(null);setAutoOn(false);}}
-          disabled={!chapters.length} style={{...sel,minWidth:72}}>
-          <option value="">—</option>
-          {chapters.map(c=><option key={c} value={c}>{c}</option>)}
-        </select>
-
-        {/* Verse */}
-        <Label T={T}>Verse</Label>
-        <select value={verse} onChange={e=>scrollToVerse(e.target.value)}
-          disabled={!verseNums.length} style={{...sel,minWidth:72}}>
-          <option value="">—</option>
-          {verseNums.map(v=><option key={v} value={v}>{v}</option>)}
-        </select>
-
-        {/* Read */}
-        <button onClick={read} disabled={!canRead} style={{
-          border:"none", fontFamily:"Georgia,serif", fontWeight:"bold", fontSize:12,
-          padding:"6px 14px", borderRadius:4, letterSpacing:0.4, cursor: canRead?"pointer":"not-allowed",
-          background: canRead ? T.btnActiveBg : T.goldFaint,
-          color: canRead ? T.btnActiveText : T.muted,
-          transition:"all 0.2s",
-        }}>Read ›</button>
-
-        {/* Status */}
         <div style={{marginLeft:"auto",fontSize:11,color:T.muted,fontStyle:"italic"}}>
           {loading ? "Loading…"
             : loadError ? <span style={{color:"#e07060"}}>⚠ {loadError}</span>
-            : leftData ? (verses ? `${verses.nums.length} verses` : `${books.length} books`) : ""}
+            : leftData ? (verses ? `${book} · Ch.${chap} · ${verses.nums.length} v` : `${books.length} books loaded`) : ""}
         </div>
 
-        {/* Ribbon toggle */}
         <button onClick={()=>setRibbon(p=>!p)} title="Settings" style={{
           border:`1px solid ${T.goldBorder}`, background: ribbon ? T.goldFaint : "transparent",
-          color:T.gold, borderRadius:4, padding:"5px 10px", cursor:"pointer",
+          color:T.gold, borderRadius:4, padding:"5px 12px", cursor:"pointer",
           fontSize:13, fontFamily:"Georgia,serif", transition:"all 0.2s",
         }}>☰{ribbon?" ▲":" ▼"}</button>
       </div>
@@ -366,10 +332,43 @@ export default function App() {
       {/* ── Ribbon ── */}
       {ribbon && (
         <div style={{
-          display:"flex", flexWrap:"wrap", alignItems:"center", gap:14,
-          padding:"10px 16px", background:T.ribbon,
-          borderBottom:`1px solid ${T.barBorder}`, flexShrink:0,
+          display:"flex", flexDirection:"column",
+          background:T.ribbon, borderBottom:`1px solid ${T.barBorder}`, flexShrink:0,
         }}>
+
+          {/* Row 1 — Navigation */}
+          <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:8,padding:"9px 16px",borderBottom:`1px solid ${T.divider}`}}>
+            <RibbonLabel T={T}>Book</RibbonLabel>
+            <select value={book} onChange={e=>{setBook(e.target.value);setChap("");setVerse("");setVerses(null);setAutoOn(false);}}
+              disabled={!leftData} style={{...sel,minWidth:140,fontSize:12}}>
+              <option value="">— Book —</option>
+              {books.map(b=><option key={b} value={b}>{b}</option>)}
+            </select>
+
+            <RibbonLabel T={T}>Ch</RibbonLabel>
+            <select value={chap} onChange={e=>{setChap(e.target.value);setVerse("");setVerses(null);setAutoOn(false);}}
+              disabled={!chapters.length} style={{...sel,minWidth:68,fontSize:12}}>
+              <option value="">—</option>
+              {chapters.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <RibbonLabel T={T}>Verse</RibbonLabel>
+            <select value={verse} onChange={e=>scrollToVerse(e.target.value)}
+              disabled={!verseNums.length} style={{...sel,minWidth:68,fontSize:12}}>
+              <option value="">—</option>
+              {verseNums.map(v=><option key={v} value={v}>{v}</option>)}
+            </select>
+
+            <button onClick={read} disabled={!canRead} style={{
+              border:"none", fontFamily:"Georgia,serif", fontWeight:"bold", fontSize:12,
+              padding:"6px 14px", borderRadius:4, letterSpacing:0.4, cursor: canRead?"pointer":"not-allowed",
+              background: canRead ? T.btnActiveBg : T.goldFaint,
+              color: canRead ? T.btnActiveText : T.muted, transition:"all 0.2s",
+            }}>Read ›</button>
+          </div>
+
+          {/* Row 2 — Settings */}
+          <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:14,padding:"9px 16px"}}>
 
           {/* View mode */}
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -436,6 +435,7 @@ export default function App() {
               fontSize:11, fontFamily:"Georgia,serif",
             }}>⚙ {showSrc?"▲":"▼"}</button>
           </div>
+        </div>
         </div>
       )}
 

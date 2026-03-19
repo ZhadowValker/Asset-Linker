@@ -160,9 +160,12 @@ export default function App() {
   autoRef.current  = autoOn;
   speedRef.current = speed;
 
-  const books    = leftData ? Object.keys(leftData) : [];
-  const chapters = (book && leftData?.[book]) ? Object.keys(leftData[book]).sort((a,b)=>+a-+b) : [];
-  const verseNums = verses ? verses.nums : [];
+  const books      = leftData  ? Object.keys(leftData)  : [];
+  const rightBooks = rightData ? Object.keys(rightData) : [];
+  const bookIdx    = book ? books.indexOf(book) : -1;
+  const rightBook  = bookIdx >= 0 ? (rightBooks[bookIdx] ?? book) : "";
+  const chapters   = (book && leftData?.[book]) ? Object.keys(leftData[book]).sort((a,b)=>+a-+b) : [];
+  const verseNums  = verses ? verses.nums : [];
   const canRead   = !!(book && chap);
 
   async function fetchBibles(lUrl: string, rUrl: string) {
@@ -265,10 +268,11 @@ export default function App() {
   }
 
   const panelContent = (side: Side) => {
-    const ref   = side==="left" ? leftRef : rightRef;
-    const onScr = side==="left" ? onLeftScroll : onRightScroll;
-    const label = side==="left" ? (leftLabel||"Left Bible") : (rightLabel||"Right Bible");
-    const color = side==="left" ? T.gold : (darkMode ? "#8ab4c9" : "#4a7a99");
+    const ref      = side==="left" ? leftRef : rightRef;
+    const onScr    = side==="left" ? onLeftScroll : onRightScroll;
+    const label    = side==="left" ? (leftLabel||"Left Bible") : (rightLabel||"Right Bible");
+    const xmlBook  = side==="left" ? book : rightBook;
+    const color    = side==="left" ? T.gold : (darkMode ? "#8ab4c9" : "#4a7a99");
     const emptyIcon = side==="left" ? "📖" : "✝";
     const emptyText = side==="left"
       ? (leftData ? "Select a book & chapter above" : "Load XML to begin")
@@ -285,9 +289,10 @@ export default function App() {
           display:"flex", alignItems:"center", gap:8,
         }}>
           <div style={{width:3,height:14,background:color,borderRadius:2,flexShrink:0,opacity:0.8}}/>
-          {book && <span style={{fontWeight:"bold",letterSpacing:0.3}}>{book}</span>}
-          {book && <span style={{opacity:0.35,fontSize:10}}>·</span>}
-          <span style={{opacity:0.75}}>{label}</span>
+          {xmlBook
+            ? <span style={{fontWeight:"bold",letterSpacing:0.3}}>{xmlBook}</span>
+            : <span style={{opacity:0.6}}>{label}</span>
+          }
         </div>
         <div ref={ref} onScroll={onScr} style={{padding:"16px 20px",overflowY:"auto",flex:1,background:T.bg}}>
           {loading ? <Loading T={T}/> : !verses

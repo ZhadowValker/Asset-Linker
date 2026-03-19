@@ -350,7 +350,11 @@ export default function App() {
             <select value={book} onChange={e=>{setBook(e.target.value);setChap("");setVerse("");setVerses(null);setAutoOn(false);}}
               disabled={!leftData} style={{...sel,minWidth:140,fontSize:12}}>
               <option value="">— Book —</option>
-              {books.map(b=><option key={b} value={b}>{b}</option>)}
+              {books.map((b,i)=>{
+                const r = rightBooks[i];
+                const label = r && r!==b ? `${i+1}  ${b} — ${r}` : `${i+1}  ${b}`;
+                return <option key={b} value={b}>{label}</option>;
+              })}
             </select>
 
             <RibbonLabel T={T}>Ch</RibbonLabel>

@@ -147,7 +147,8 @@ export default function App() {
   const [activeSide, setActiveSide] = useState<Side>("left");
   const [darkMode,   setDarkMode]   = useState(true);
   const [ribbon,     setRibbon]     = useState(false);
-  const [showSrc,    setShowSrc]    = useState(false);
+  const [showSrc,     setShowSrc]    = useState(false);
+  const [showChapDrop,setShowChapDrop] = useState(false);
 
   const T: Theme = darkMode ? DARK : LIGHT;
 
@@ -184,14 +185,48 @@ export default function App() {
 
   useEffect(() => { fetchBibles(DEFAULT_LEFT, DEFAULT_RIGHT); }, []);
 
-  function read() {
-    if (!book || !chap || !leftData || !rightData) return;
-    const tV = leftData[book]?.[chap] || {};
-    const rKey = rightBook || book;
-    const nV = rightData[rKey]?.[chap] || {};
+  function readChap(b: string, c: string) {
+    if (!b || !c || !leftData || !rightData) return;
+    const tV = leftData[b]?.[c] || {};
+    const bIdx = books.indexOf(b);
+    const rKey = (bIdx >= 0 ? rightBooks[bIdx] : "") || b;
+    const nV = rightData[rKey]?.[c] || {};
     const nums = [...new Set([...Object.keys(tV),...Object.keys(nV)])].sort((a,b)=>+a-+b);
-    setVerses({tV,nV,nums}); setVerse(""); setAutoOn(false);
+    setVerses({tV,nV,nums}); setVerse(""); setAutoOn(false); setShowChapDrop(false);
     setTimeout(()=>{ leftRef.current && (leftRef.current.scrollTop=0); rightRef.current && (rightRef.current.scrollTop=0); }, 60);
+  }
+
+  function read() { readChap(book, chap); }
+
+  function goNextChap() {
+    if (!book || !leftData) return;
+    const idx = chapters.indexOf(chap);
+    if (idx < chapters.length - 1) { const nc = chapters[idx+1]; setChap(nc); readChap(book, nc); }
+    else goNextBook("first");
+  }
+  function goPrevChap() {
+    if (!book || !leftData) return;
+    const idx = chapters.indexOf(chap);
+    if (idx > 0) { const pc = chapters[idx-1]; setChap(pc); readChap(book, pc); }
+    else goPrevBook("last");
+  }
+  function goNextBook(chapPos: "first"|"last" = "first") {
+    const idx = books.indexOf(book);
+    if (idx < books.length - 1 && leftData) {
+      const nb = books[idx+1];
+      const nbChaps = Object.keys(leftData[nb]||{}).sort((a,b)=>+a-+b);
+      const nc = chapPos==="last" ? nbChaps[nbChaps.length-1] : nbChaps[0];
+      setBook(nb); setChap(nc||""); readChap(nb, nc||"");
+    }
+  }
+  function goPrevBook(chapPos: "first"|"last" = "first") {
+    const idx = books.indexOf(book);
+    if (idx > 0 && leftData) {
+      const pb = books[idx-1];
+      const pbChaps = Object.keys(leftData[pb]||{}).sort((a,b)=>+a-+b);
+      const pc = chapPos==="last" ? pbChaps[pbChaps.length-1] : pbChaps[0];
+      setBook(pb); setChap(pc||""); readChap(pb, pc||"");
+    }
   }
 
   function scrollToVerse(vn: string) {
@@ -207,11 +242,19 @@ export default function App() {
 
   const onLeftScroll = () => {
     if (autoRef.current || syncing.current || !rightRef.current || !leftRef.current) return;
-    syncing.current = true; rightRef.current.scrollTop = leftRef.current.scrollTop; syncing.current = false;
+    syncing.current = true;
+    const el = leftRef.current, r = rightRef.current;
+    const pct = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight);
+    r.scrollTop = pct * Math.max(1, r.scrollHeight - r.clientHeight);
+    requestAnimationFrame(() => { syncing.current = false; });
   };
   const onRightScroll = () => {
     if (autoRef.current || syncing.current || !leftRef.current || !rightRef.current) return;
-    syncing.current = true; leftRef.current.scrollTop = rightRef.current.scrollTop; syncing.current = false;
+    syncing.current = true;
+    const el = rightRef.current, l = leftRef.current;
+    const pct = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight);
+    l.scrollTop = pct * Math.max(1, l.scrollHeight - l.clientHeight);
+    requestAnimationFrame(() => { syncing.current = false; });
   };
 
   useEffect(() => {
@@ -318,16 +361,25 @@ export default function App() {
 
       {/* ── Main toolbar ── */}
       <div style={{
-        display:"flex", alignItems:"center", gap:8,
-        padding:"7px 14px", background:T.bar,
+        display:"flex", alignItems:"center", gap:10,
+        padding:"6px 14px", background:T.bar,
         borderBottom:`1px solid ${T.barBorder}`, flexShrink:0,
       }}>
+        {/* Play/Pause */}
+        <button onClick={()=>verses && setAutoOn(p=>!p)} title={autoOn?"Pause":"Auto-scroll"} style={{
+          width:30, height:30, borderRadius:"50%", border:`1px solid ${T.goldBorder}`,
+          flexShrink:0, background: autoOn ? T.btnActiveBg : "transparent",
+          color: verses ? T.gold : T.muted, cursor: verses?"pointer":"not-allowed",
+          fontSize:11, transition:"all 0.2s", display:"flex", alignItems:"center", justifyContent:"center",
+          boxShadow: autoOn ? `0 0 8px ${T.hlBorder}` : "none",
+        }}>{autoOn ? "⏸" : "▶"}</button>
+
         <span style={{fontSize:13,letterSpacing:1,color:T.gold,fontStyle:"italic",fontWeight:"bold"}}>✝ Bible Reader</span>
 
         <div style={{marginLeft:"auto",fontSize:11,color:T.muted,fontStyle:"italic"}}>
           {loading ? "Loading…"
             : loadError ? <span style={{color:"#e07060"}}>⚠ {loadError}</span>
-            : leftData ? (verses ? `${book} · Ch.${chap} · ${verses.nums.length} v` : `${books.length} books loaded`) : ""}
+            : leftData ? (verses ? `${verses.nums.length} v` : `${books.length} books`) : ""}
         </div>
 
         <button onClick={()=>setRibbon(p=>!p)} title="Settings" style={{
@@ -485,58 +537,83 @@ export default function App() {
 
       {/* ── Info bar (always visible) ── */}
       <div style={{
-        display:"flex", alignItems:"center", gap:0,
-        padding:"0", background:T.panelHead,
-        borderBottom:`1px solid ${T.barBorder}`, flexShrink:0, minHeight:34,
+        display:"flex", alignItems:"center",
+        background:T.panelHead, borderBottom:`1px solid ${T.barBorder}`,
+        flexShrink:0, minHeight:36, position:"relative",
       }}>
-        {/* Play/Pause quick button */}
-        <button onClick={()=>verses && setAutoOn(p=>!p)} title={autoOn?"Pause auto-scroll":"Play auto-scroll"} style={{
-          width:34, height:34, flexShrink:0, border:"none",
-          borderRight:`1px solid ${T.barBorder}`,
-          background: autoOn ? T.goldFaint : "transparent",
-          color: verses ? T.gold : T.muted,
-          cursor: verses ? "pointer" : "not-allowed",
-          fontSize:12, transition:"all 0.2s",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow: autoOn ? `inset 0 0 8px ${T.goldFaint}` : "none",
-        }}>{autoOn ? "⏸" : "▶"}</button>
+        {/* Left nav buttons */}
+        <div style={{display:"flex", alignItems:"center", flexShrink:0}}>
+          <NavBtn title="Previous book" disabled={!book || books.indexOf(book)<=0} onClick={()=>goPrevBook()} T={T}>«</NavBtn>
+          <NavBtn title="Previous chapter" disabled={!chap} onClick={goPrevChap} T={T}>‹</NavBtn>
+        </div>
 
         {/* Left label */}
-        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center",
-          gap:6, padding:"0 12px", overflow:"hidden"}}>
+        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", padding:"0 6px"}}>
           <span style={{color:T.gold, fontSize:11, fontStyle:"italic",
             whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
             {leftLabel || "—"}
           </span>
         </div>
 
-        {/* Chapter middle */}
-        <div style={{
-          flexShrink:0, padding:"0 16px", borderLeft:`1px solid ${T.barBorder}`,
-          borderRight:`1px solid ${T.barBorder}`, height:"100%",
-          display:"flex", alignItems:"center",
-        }}>
-          <span style={{fontSize:11, color:T.muted, letterSpacing:1, textTransform:"uppercase"}}>
+        {/* Chapter — clickable with dropdown */}
+        <div style={{position:"relative", flexShrink:0}}>
+          <button
+            onClick={()=>chapters.length>0 && setShowChapDrop(p=>!p)}
+            style={{
+              background:"transparent", border:"none", cursor: chapters.length?"pointer":"default",
+              borderLeft:`1px solid ${T.barBorder}`, borderRight:`1px solid ${T.barBorder}`,
+              padding:"0 18px", height:36, display:"flex", alignItems:"center", gap:5,
+              color: chap ? T.gold : T.muted, fontFamily:"Georgia,serif",
+              fontSize:12, letterSpacing:1, fontWeight:"bold", transition:"background 0.15s",
+            }}
+            onMouseEnter={e=>(e.currentTarget.style.background=T.goldFaint)}
+            onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
+          >
             {chap ? `Ch. ${chap}` : "Ch. —"}
-          </span>
+            {chapters.length > 0 && <span style={{fontSize:8, opacity:0.5, marginTop:1}}>▼</span>}
+          </button>
+
+          {/* Chapter dropdown */}
+          {showChapDrop && chapters.length > 0 && (
+            <div style={{
+              position:"absolute", top:"100%", left:"50%", transform:"translateX(-50%)",
+              background:T.bar, border:`1px solid ${T.goldBorder}`,
+              borderRadius:6, zIndex:200, boxShadow:`0 8px 24px rgba(0,0,0,0.5)`,
+              maxHeight:220, overflowY:"auto", minWidth:90,
+            }}>
+              {chapters.map(c=>(
+                <button key={c} onClick={()=>{setChap(c); readChap(book,c);}} style={{
+                  display:"block", width:"100%", padding:"6px 16px",
+                  background: c===chap ? T.goldFaint : "transparent",
+                  border:"none", color: c===chap ? T.gold : T.text,
+                  fontFamily:"Georgia,serif", fontSize:12, cursor:"pointer",
+                  textAlign:"center", transition:"background 0.1s",
+                }}
+                onMouseEnter={e=>(e.currentTarget.style.background=T.goldFaint)}
+                onMouseLeave={e=>(e.currentTarget.style.background= c===chap?T.goldFaint:"transparent")}
+                >{c}</button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right label */}
-        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center",
-          gap:6, padding:"0 12px", overflow:"hidden"}}>
+        <div style={{flex:1, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", padding:"0 6px"}}>
           <span style={{color: darkMode?"#8ab4c9":"#4a7a99", fontSize:11, fontStyle:"italic",
             whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
             {rightLabel || "—"}
           </span>
         </div>
 
-        {/* Scrolling indicator */}
-        {autoOn && (
-          <div style={{flexShrink:0, paddingRight:10}}>
-            <Blink T={T}/>
-          </div>
-        )}
+        {/* Right nav buttons */}
+        <div style={{display:"flex", alignItems:"center", flexShrink:0}}>
+          <NavBtn title="Next chapter" disabled={!chap} onClick={goNextChap} T={T}>›</NavBtn>
+          <NavBtn title="Next book" disabled={!book || books.indexOf(book)>=books.length-1} onClick={()=>goNextBook()} T={T}>»</NavBtn>
+        </div>
       </div>
+
+      {/* close chapter drop on outside click */}
+      {showChapDrop && <div onClick={()=>setShowChapDrop(false)} style={{position:"fixed",inset:0,zIndex:199}}/>}
 
       {/* ── Single-view side switcher ── */}
       {!parallel && verses && (
@@ -678,5 +755,21 @@ function Loading({ T }: { T: Theme }) {
       <div style={{width:26,height:26,borderRadius:"50%",border:`2px solid ${T.spinBorder}`,borderTopColor:T.gold,animation:"spin 0.8s linear infinite"}}/>
       <div style={{color:T.muted,fontSize:12,fontStyle:"italic"}}>Loading from GitHub…</div>
     </div>
+  );
+}
+
+function NavBtn({ children, onClick, disabled, title, T }: {
+  children: React.ReactNode; onClick: ()=>void; disabled: boolean; title: string; T: Theme;
+}) {
+  return (
+    <button title={title} onClick={onClick} disabled={disabled} style={{
+      width:32, height:36, border:"none", background:"transparent",
+      color: disabled ? T.muted : T.gold, fontSize:15, cursor: disabled?"not-allowed":"pointer",
+      opacity: disabled ? 0.3 : 0.75, transition:"opacity 0.15s, background 0.15s",
+      display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+    }}
+    onMouseEnter={e=>{ if(!disabled)(e.currentTarget as HTMLButtonElement).style.opacity="1"; }}
+    onMouseLeave={e=>{ if(!disabled)(e.currentTarget as HTMLButtonElement).style.opacity="0.75"; }}
+    >{children}</button>
   );
 }

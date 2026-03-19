@@ -352,7 +352,7 @@ export default function App() {
               <option value="">— Book —</option>
               {books.map((b,i)=>{
                 const r = rightBooks[i];
-                const label = r && r!==b ? `${i+1}  ${b} — ${r}` : `${i+1}  ${b}`;
+                const label = r && r!==b ? `${i+1}).   ${b} — ${r}` : `${i+1}).   ${b}`;
                 return <option key={b} value={b}>{label}</option>;
               })}
             </select>

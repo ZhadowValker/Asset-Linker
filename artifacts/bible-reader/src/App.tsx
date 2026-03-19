@@ -187,7 +187,8 @@ export default function App() {
   function read() {
     if (!book || !chap || !leftData || !rightData) return;
     const tV = leftData[book]?.[chap] || {};
-    const nV = rightData[book]?.[chap] || {};
+    const rKey = rightBook || book;
+    const nV = rightData[rKey]?.[chap] || {};
     const nums = [...new Set([...Object.keys(tV),...Object.keys(nV)])].sort((a,b)=>+a-+b);
     setVerses({tV,nV,nums}); setVerse(""); setAutoOn(false);
     setTimeout(()=>{ leftRef.current && (leftRef.current.scrollTop=0); rightRef.current && (rightRef.current.scrollTop=0); }, 60);
